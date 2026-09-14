@@ -1,0 +1,54 @@
+name: Apple在庫の自動更新
+
+# このワークフローは、決まったタイミングで自動的にサーバー側で
+# scrape_ringonodorei_apple.py を実行し、結果の ringonodorei_apple_stock.json を
+# このリポジトリに自動でコミット（保存）します。
+#
+# これが動くようになれば、やっぴ〜自身も含めて「誰も手動でスクリプトを実行しなくてよく」なります。
+# ツールを配布された人は、ページを開くだけで常に最新の在庫データを見られます。
+
+on:
+  schedule:
+    # 毎日 日本時間 9:00 に実行（UTC 0:00 = JST 9:00）
+    # 頻度を変えたい場合はここを編集してください（例: 6時間ごとなら "0 */6 * * *"）
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    # GitHubの画面から手動で「今すぐ実行」もできるようにしておく（テスト用に便利）
+
+permissions:
+  contents: write  # 結果をリポジトリにコミットするために必要
+
+jobs:
+  update-stock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリを取得
+        uses: actions/checkout@v4
+
+      - name: Pythonをセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 必要なライブラリをインストール
+        run: |
+          pip install playwright beautifulsoup4
+          python -m playwright install --with-deps chromium
+
+      - name: ログイン状態を復元
+        # GitHubリポジトリの「Settings > Secrets and variables > Actions」で
+        # RINGONODOREI_AUTH_STATE という名前のSecretを作り、
+        # auth_state.json の中身をそのままコピペして保存しておく必要があります。
+        run: |
+          echo '${{ secrets.RINGONODOREI_AUTH_STATE }}' > auth_state.json
+
+      - name: 在庫データを取得
+        run: python scrape_ringonodorei_apple.py
+
+      - name: 変更があればリポジトリにコミット
+        run: |
+          git config user.name "yappi-stock-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add ringonodorei_apple_stock.json
+          git diff --cached --quiet && echo "変更なし" || git commit -m "🤖 Apple在庫データを自動更新"
+          git push
