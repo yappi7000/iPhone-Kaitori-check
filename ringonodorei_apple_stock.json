@@ -39,7 +39,6 @@
     "Apple 福岡": false
   },
   "iPhone 17 Pro 256GB シルバー": {
-    "Apple 心斎橋": true,
     "Apple 銀座": false,
     "Apple 丸の内": false,
     "Apple 表参道": false,
@@ -47,6 +46,7 @@
     "Apple 渋谷": false,
     "Apple 川崎": false,
     "Apple 梅田": false,
+    "Apple 心斎橋": false,
     "Apple 京都": false,
     "Apple 名古屋栄": false,
     "Apple 福岡": false
